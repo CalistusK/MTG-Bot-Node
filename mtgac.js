@@ -46,11 +46,8 @@ client.on("message", async message => {
         var halfcost;
         var halftype;
         var halftext;
-        var i;
-        // This for loop doesn't seem to do anything yet.
-          for (i = 0; i == 2; i++) {
+          for (var i = 0; i < 2; i++) {
             cardhalf = cd.card_faces[i];
-            console.log(i);
             halfname = "```" + cardhalf.name + " ";
             (ifexists(cardhalf.mana_cost) != "") ? halfcost = cardhalf.mana_cost + "\n" : halfcost = "\n";
             halftype = cardhalf.type_line + "\n";
