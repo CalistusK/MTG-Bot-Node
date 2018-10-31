@@ -39,16 +39,50 @@ client.on("message", async message => {
   async function sendCardText (params) {
       rp(params)
       .then(async function (cd) {
-        await message.channel.send(sprintf("%s %s\n%s (%s)\n%s\n%s%s%s", [
-          cd.name,
-          (ifexists(cd.mana_cost) != "") ? emojify(cd.mana_cost, message.guild) : "",
-          titlecase(cd.rarity),
-          cd.set.toUpperCase(),
-          cd.type_line.replace("â€”","—"),
-          (cd.oracle_text == "" ? "" : "```\n") + cd.oracle_text.replace("â€”","—") + (cd.oracle_text == "" ? "" : "```"),
-          ifexists(cd.power) + (cd.power == undefined ? "" : "/") + ifexists(cd.toughness),
-          (cd.loyalty == undefined ? "" : "Loyalty: ") + ifexists(cd.loyalty)
-          ]));
+        if (ifexists(cd.card_faces) != "") {
+        var halves = "";
+        var cardhalf;
+        var halfname;
+        var halfcost;
+        var halftype;
+        var halftext;
+        var i;
+        // This for loop doesn't seem to do anything yet.
+          for (i = 0; i == 2; i++) {
+            cardhalf = cd.card_faces[i];
+            console.log(i);
+            halfname = "```" + cardhalf.name + " ";
+            (ifexists(cardhalf.mana_cost) != "") ? halfcost = cardhalf.mana_cost + "\n" : halfcost = "\n";
+            halftype = cardhalf.type_line + "\n";
+            halftext = cardhalf.oracle_text;
+            (ifexists(cardhalf.power) != "") ? pt = "\n" + cardhalf.power + "/" + cardhalf.toughness : pt = "";
+            halves += halfname + halfcost + halftype.replace("â€”","—") + halftext + pt + '```';
+            if (i == 0) {
+              if (ifexists(cardhalf.loyalty) != "") {
+              halves += "Loyalty: " + cardhalf.loyalty;
+              }
+              halves += "\n";
+            }
+          }
+          await message.channel.send(sprintf("%s\n%s\n%s (%s)\n%s", [
+            cd.name,
+            (ifexists(cd.card_faces[1].mana_cost != "")) ? emojify(cd.card_faces[0].mana_cost, message.guild) + " // " + emojify(cd.card_faces[1].mana_cost, message.guild) : emojify(cd.card_faces[0].mana_cost, message.guild),
+            titlecase(cd.rarity),
+            cd.set.toUpperCase(),
+            halves
+            ]));
+        } else {
+          await message.channel.send(sprintf("%s %s\n%s (%s)\n%s\n%s%s%s", [
+            cd.name,
+            (ifexists(cd.mana_cost) != "") ? emojify(cd.mana_cost, message.guild) : "",
+            titlecase(cd.rarity),
+            cd.set.toUpperCase(),
+            cd.type_line.replace("â€”","—"),
+            (cd.oracle_text == "" ? "" : "```\n") + cd.oracle_text.replace("â€”","—") + (cd.oracle_text == "" ? "" : "```"),
+            ifexists(cd.power) + (cd.power == undefined ? "" : "/") + ifexists(cd.toughness),
+            (cd.loyalty == undefined ? "" : "Loyalty: ") + ifexists(cd.loyalty)
+            ]));
+        }
       })
       .catch(async function(err) {
         console.log(err)
