@@ -89,16 +89,15 @@ client.on("message", async message => {
   async function sendCardPrice (params) {
     rp(params)
     .then(async function (cd) {
-      if (cd.usd == undefined) {
-        await message.channel.send(sprintf("No USD price found for %s (%s)", [
-          cd.name,
-          cd.set.toUpperCase()
+      if (cd.data[0].usd == undefined) {
+        await message.channel.send(sprintf("No USD price found for %s", [
+          cd.data[0].name
           ]))
       } else {
         await message.channel.send(sprintf("%s (%s) ~ $%s", [
-          cd.name,
-          cd.set.toUpperCase(),
-          cd.usd
+          cd.data[0].name,
+          cd.data[0].set.toUpperCase(),
+          cd.data[0].usd
           ]
         ));
       }
@@ -125,6 +124,14 @@ client.on("message", async message => {
     },
     json: true
   }
+  var searchPrice = {
+    uri: "https://api.scryfall.com/cards/search",
+    qs: {
+        order: "usd",
+        q: args.join(" ")
+    },
+    json: true
+  }
   
   if(command === "c") {
     sendCardText(searchCard)
@@ -135,7 +142,7 @@ client.on("message", async message => {
   }
 
   if(command === "p") {
-    sendCardPrice(searchCard)
+    sendCardPrice(searchPrice)
   }
   
   if(command === "ps") {
