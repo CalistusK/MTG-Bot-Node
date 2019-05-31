@@ -1,0 +1,22 @@
+{
+  "name": "calistus-mtg-card-bot-in-node",
+  "version": "1.0.0",
+  "description": "",
+  "main": "mtgac.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CalistusK/Calistus-MTG-Card-Bot-in-Node.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CalistusK/Calistus-MTG-Card-Bot-in-Node/issues"
+  },
+  "homepage": "https://github.com/CalistusK/Calistus-MTG-Card-Bot-in-Node#readme",
+  "devDependencies": {
+    "eslint": "^5.16.0"
+  }
+}
