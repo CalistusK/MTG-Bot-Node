@@ -1,6 +1,7 @@
 const Discord = require("discord.js");
 const auth = require("./auth.json");
 const config = require("./config.json");
+const fs = require("fs");
 const request = require('request');
 const rp = require('request-promise');
 const client = new Discord.Client();
@@ -156,31 +157,31 @@ client.on("message", async message => {
     }
 
     async function sendRulings(params) {
-        rp(params)
-            .then(async function(cd) {
-                var uriRulings = {
-                    uri: cd.rulings_uri,
-                    json: true
-                }
-                rp(uriRulings)
-                    .then(async function(cr) {
-                        if (cr.data === undefined || cr.data.length == 0) {
-                            await message.channel.send("No rulings found for " & cd.name)
-                        } else {
-                            var readyRulings = parseRulings(cr.data);
-                            if (typeof readyRulings === "string") {
-                                await message.channel.send(readyRulings);
-                            } else {
-                                for (let i = 0; i < readyRulings.length; i++) {
-                                    await message.channel.send(readyRulings[i]);
-                                    await sleep(1000);
-                                }
-                            }
-                        }
-                    })
+		rp(params)
+			.then(async function (cd) {
+				var uriRulings = {
+					uri: cd.rulings_uri,
+					json: true
+				}
+				rp(uriRulings)
+					.then(async function (cr) {
+						if (cr.data === undefined || cr.data.length == 0) {
+							await message.channel.send("No rulings found for " & cd.name)
+						} else {
+							var readyRulings = parseRulings(cr.data);
+							if (typeof readyRulings === "string") {
+								await message.channel.send(readyRulings);
+							} else {
+								for (let i = 0; i < readyRulings.length; i++) {
+									await message.channel.send(readyRulings[i]);
+									await sleep(1000);
+								}
+							}
+						}
+					})
 
-            })
-    }
+			})
+	}
 
     const args = message.content.slice(config.prefix.length).trim().split(/ +/g);
     const command = args.shift().toLowerCase();
@@ -221,9 +222,24 @@ client.on("message", async message => {
         case "ps":
             sendCardPrice(searchSetCard);
             break;
-        case "r":
-            sendRulings(searchCard);
-            break;
+		case "r":
+			if (auth.channelwl.includes(message.channel.id)) {
+			sendRulings(searchCard);
+			}
+			break;
+        case "whitelist":
+			//add "owners" to your auth.json as an array with Discord IDs of users who should have access to this command
+			//add "channelwl" to your auth.json as an empty array
+			if (auth.owners.includes(message.author.id) && !auth.channelwl.includes(message.channel.id)) {
+				auth.channelwl.push(message.channel.id);
+				fs.writeFile("./auth.json", JSON.stringify(auth,0,4), (err) => {console.log(err)});
+				message.channel.send(message.channel.name + " has been whitelisted for commands that require whitelisting.")
+			} else {
+				auth.channelwl = auth.channelwl.filter(chan => chan !== message.channel.id);
+				fs.writeFile("./auth.json", JSON.stringify(auth,0,4), (err) => {console.log(err)});
+				message.channel.send(message.channel.name + " has been removed from the whitelist.");
+			}
+			break;
     }
 });
 
