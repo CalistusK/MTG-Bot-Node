@@ -8,8 +8,26 @@ const client = new Discord.Client();
 
 axios.defaults.baseURL = 'https://api.scryfall.com/cards';
 
+function emojify(cost) {
+  const alteredCost = cost.replace(/[{}]/g, '');
+  const manaCount = /\d/.test(alteredCost) ? /\d+/.exec(alteredCost)[0] : null;
+  let manaTypes = /\D/.test(alteredCost) ? /\D+/.exec(alteredCost)[0] : null;
+
+  if (!manaTypes) return manaCount;
+
+  manaTypes = manaTypes.replace(/W/g, ':white_circle:');
+  manaTypes = manaTypes.replace(/U/g, ':large_blue_circle:');
+  manaTypes = manaTypes.replace(/B/g, ':black_circle:');
+  manaTypes = manaTypes.replace(/R/g, ':red_circle:');
+  manaTypes = manaTypes.replace(/G/g, ':evergreen_tree:');
+
+  if (!manaCount) return manaTypes;
+
+  return `${manaCount} ${manaTypes}`;
+}
+
 async function searchCard(args, channel) {
-  let message = '```';
+  let message = '';
   let faces = [];
 
   axios.get('/named', {
@@ -19,21 +37,21 @@ async function searchCard(args, channel) {
   })
     .then(async (response) => {
       faces = response.data.card_faces ? response.data.card_faces : [response.data];
-      faces.forEach((face) => {
+      faces.forEach((face, index) => {
         message += `${face.name}`;
-        message += face.mana_cost ? ` ${face.mana_cost}\n` : '\n';
+        message += face.mana_cost ? ` - ${emojify(face.mana_cost)}\n` : '\n';
+        message += '```';
         message += `${face.type_line}\n`;
         message += face.oracle_text ? `${face.oracle_text}\n` : '';
         message += face.power ? `${face.power}\\${face.toughness}\n` : '';
         message += face.loyalty ? `Loyalty: ${face.loyalty}` : '';
-        message += faces.length > 1 ? '\n' : '';
+        message += '```';
+        message += index !== faces.length - 1 ? '\n' : '';
       });
-
-      message += '```';
 
       await channel.send(message);
     })
-    .catch(async () => {
+    .catch(async (err) => {
       await channel.send('Something went wrong while trying to find this card. :(');
     });
 }
