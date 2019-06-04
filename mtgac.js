@@ -8,6 +8,63 @@ const client = new Discord.Client();
 
 axios.defaults.baseURL = 'https://api.scryfall.com/cards';
 
+function buildCardPrice(cards, query, isArray) {
+  let card;
+
+  if (isArray) {
+    card = cards.find(item => item.name.toLowerCase() === query.toLowerCase());
+
+    if (!card) {
+      card = cards[0];
+    }
+  } else {
+    card = cards;
+  }
+
+  const name = card.name;
+
+  if (!card.prices.usd && !card.prices.usd_foil) {
+    return `No USD price found for ${name}`;
+  }
+
+  const price = !card.prices.usd
+    ? `${card.prices.usd_foil} (foil)`
+    : Math.min(...[card.prices.usd, card.prices.usd_foil].filter(Boolean));
+
+  return `${name} (${card.set.toUpperCase()}) ~ $${price}`;
+}
+
+function buildCardInfo(card) {
+  const cardInfo = [];
+  const faces = card.card_faces ? card.card_faces : [card];
+  faces.forEach((face) => {
+    if (face.mana_cost) {
+      cardInfo.push(`${face.name} - ${emojify(face.mana_cost)}`);
+    } else {
+      cardInfo.push(face.name);
+    }
+
+    cardInfo.push('```');
+    cardInfo.push(face.type_line);
+
+    if (face.oracle_text) {
+      cardInfo.push(face.oracle_text);
+    }
+
+    if (face.power) {
+      cardInfo.push(`${face.power}\\${face.toughness}`);
+    }
+
+    if (face.loyalty) {
+      cardInfo.push(`Loyalty: ${face.loyalty}`);
+    }
+
+    cardInfo.push('```');
+  });
+
+  return cardInfo.join('\n');
+}
+
 function emojify(cost) {
   const alteredCost = cost.replace(/[{}]/g, '');
   const manaCount = /\d/.test(alteredCost) ? /\d+/.exec(alteredCost)[0] : null;
@@ -26,37 +83,67 @@ function emojify(cost) {
   return `${manaCount} ${manaTypes}`;
 }
 
-async function searchCard(args, channel) {
-  let message = '';
-  let faces = [];
-
+function searchCard(args, channel) {
+  let cardInfo;
   axios.get('/named', {
     params: {
       fuzzy: args.join(' '),
     },
   })
-    .then(async (response) => {
-      faces = response.data.card_faces ? response.data.card_faces : [response.data];
-      faces.forEach((face, index) => {
-        message += `${face.name}`;
-        message += face.mana_cost ? ` - ${emojify(face.mana_cost)}\n` : '\n';
-        message += '```';
-        message += `${face.type_line}\n`;
-        message += face.oracle_text ? `${face.oracle_text}\n` : '';
-        message += face.power ? `${face.power}\\${face.toughness}\n` : '';
-        message += face.loyalty ? `Loyalty: ${face.loyalty}` : '';
-        message += '```';
-        message += index !== faces.length - 1 ? '\n' : '';
-      });
-
-      await channel.send(message);
+    .then((response) => {
+      cardInfo = buildCardInfo(response.data);
     })
-    .catch(async (err) => {
-      await channel.send('Something went wrong while trying to find this card. :(');
+    .then(() => {
+      channel.send(cardInfo);
+    })
+    .catch((err) => {
+      console.log(err);
+      channel.send('Something went wrong while trying to find this card. :(');
     });
 }
 
-async function handleMessage(message) {
+function searchCardPrice(args, channel) {
+  let cardPrice;
+  axios.get('/search', {
+    params: {
+      dir: 'asc',
+      order: 'usd',
+      q: args.join(' '),
+    },
+  })
+    .then((response) => {
+      cardPrice = buildCardPrice(response.data.data, args.join(' '), true);
+    })
+    .then(() => {
+      channel.send(cardPrice);
+    })
+    .catch((err) => {
+      console.log(err)
+      channel.send('Something went wrong while trying to find this card. :(');
+    });
+}
+
+function searchCardSetPrice(args, channel) {
+  let cardPrice;
+  axios.get('/named', {
+    params: {
+      set: args[0],
+      fuzzy: args.slice(1).join(' '),
+    },
+  })
+    .then((response) => {
+      cardPrice = buildCardPrice(response.data, args.join(' '), false);
+    })
+    .then(() => {
+      channel.send(cardPrice);
+    })
+    .catch((err) => {
+      console.log(err);
+      channel.send('Something went wrong while trying to find this card. :(');
+    });
+}
+
+function handleMessage(message) {
   if (message.author.bot) return;
   if (message.content.indexOf(config.prefix) !== 0) return;
 
@@ -67,14 +154,11 @@ async function handleMessage(message) {
     case 'c':
       searchCard(args, message.channel);
       break;
-    case 'cs':
-      console.log('Searching for a set card...');
-      break;
     case 'p':
-      console.log('Searching for price...');
+      searchCardPrice(args, message.channel);
       break;
     case 'ps':
-      console.log('Searching for ???');
+      searchCardSetPrice(args, message.channel);
       break;
     case 'r':
       console.log('Searching for rulings...');
@@ -92,6 +176,5 @@ client.on('ready', () => {
 client.on('message', async (message) => {
   handleMessage(message);
 });
-
 
 client.login(auth.token);
