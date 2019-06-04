@@ -31,7 +31,7 @@ function buildCardPrice(cards, query, isArray) {
     ? `${card.prices.usd_foil} (foil)`
     : Math.min(...[card.prices.usd, card.prices.usd_foil].filter(Boolean));
 
-  return `${name} (${card.set.toUpperCase()}) ~ $${price}`;
+  return `${name} (${card.set.toUpperCase()}) ~ $${price.toFixed(2)}`;
 }
 
 function buildCardInfo(card) {
