@@ -207,6 +207,11 @@ client.on('message', async message => {
     qs: {fuzzy: args.join(' ')},
     json: true
   }
+  var searchRandCard = {
+    uri: 'https://api.scryfall.com/cards/random',
+    qs: {q: args.join(' ')},
+    json: true
+  }
   var searchSetCard = {
     uri: 'https://api.scryfall.com/cards/named',
     qs: {set: args[0], fuzzy: args.slice(1).join(' ')},
@@ -234,6 +239,9 @@ client.on('message', async message => {
       if (auth.channelwl.includes(message.channel.id)) {
         sendRulings(searchCard);
       }
+      break;
+    case 'random':
+      sendCardText(searchRandCard);
       break;
     case 'whitelist':
       // add "owners" to your auth.json as an array with Discord IDs of users
