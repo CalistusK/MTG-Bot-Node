@@ -10,22 +10,8 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function sprintf(template, values) {
-  return template.replace(/%s/g, function() {
-    return values.shift();
-  });
-}
-
 function titlecase(string) {
   return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-function ifexists(cardpart) {
-  if (cardpart == undefined) {
-    return '';
-  } else {
-    return cardpart;
-  }
 }
 
 function emojify(cost, server) {
@@ -100,8 +86,8 @@ client.on('message', async message => {
           if (cd.card_faces) {
             let otherHalfCost = '';
             let halves = [];
+
             if (cd.card_faces[1].mana_cost) otherHalfCost = ' // ' + emojify(cd.card_faces[1].mana_cost, message.guild);
-            
             buildMessage.push(cd.card_faces[0].name + ' // ' + cd.card_faces[1].name);
             buildMessage.push(emojify(cd.card_faces[0].mana_cost, message.guild) + otherHalfCost);
             buildMessage.push(titlecase(cd.rarity) + ' (' + cd.set.toUpperCase() + ')');
@@ -109,10 +95,10 @@ client.on('message', async message => {
             {
               let half = ['```\n'];
               loyalty = '';
+
               if (cd.card_faces[i].oracle_text) oracletext = cd.card_faces[i].oracle_text;
               if (cd.card_faces[i].power) pt = cd.card_faces[i].power + '/' + cd.card_faces[i].toughness;
               if (cd.card_faces[i].loyalty) loyalty = 'Loyalty: ' + cd.card_faces[i].loyalty;
-
               half.push(cd.card_faces[i].name + ' ' + cd.card_faces[i].mana_cost);
               half.push(cd.type_line);
               half.push(oracletext);
@@ -126,7 +112,6 @@ client.on('message', async message => {
             if (cd.oracle_text) oracletext = '```\n' + cd.oracle_text + '```';
             if (cd.power) pt = cd.power + '/' + cd.toughness;
             if (cd.loyalty) loyalty = 'Loyalty: ' + cd.loyalty;
-
             buildMessage.push(cd.name + ' ' + emojify(cd.mana_cost, message.guild));
             buildMessage.push(titlecase(cd.rarity) + ' (' + cd.set.toUpperCase() + ')');
             buildMessage.push(cd.type_line);
@@ -142,24 +127,21 @@ client.on('message', async message => {
   async function sendCardPrice(params) {
     rp(params)
         .then(async function(cd) {
-          let cdset;
+          let cdset = cd;
           let price;
-          ifexists(cd.data) ? cdset = searchExact(cd, args.join(' ')) :
-                              cdset = cd
-          if (cdset.prices.usd == undefined &&
-              cdset.prices.usd_foil == undefined) {
-            await message.channel.send(
-                sprintf('No USD price found for %s', [cdset.name]));
-          }
-          else {
-            if (cdset.prices.usd == undefined) {
-              price = cdset.prices.usd_foil + ' (foil)';
+
+          if (cd.data) cdset = searchExact(cd, args.join(' '));
+          if (!cdset.prices.usd && !cdset.prices.usd_foil) {
+            await message.channel.send(`No USD price found for ${cdset.name}`);
+          } else {
+            if (!cdset.prices.usd) {
+              price = parseFloat(cdset.prices.usd_foil).toFixed(2) + ' (foil)';
             } else {
-              price = Math.min([cdset.prices.usd, cdset.prices.usd_foil].filter(
-                  pf => pf > 0));
+              price = Math.min(...[cdset.prices.usd, cdset.prices.usd_foil]
+                          .filter(Boolean))
+                          .toFixed(2);
             }
-            await message.channel.send(sprintf(
-                '%s (%s) ~ $%s', [cdset.name, cdset.set.toUpperCase(), price]));
+            await message.channel.send(`${cdset.name} (${cdset.set.toUpperCase()}) ~ $${price}`);
           }
         })
         .catch(async function(err) {
