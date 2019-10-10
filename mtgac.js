@@ -29,6 +29,9 @@ function ifexists(cardpart) {
 }
 
 function emojify(cost, server) {
+  if (!cost) {
+    return '';
+  }
   let i;
   let emocost = '';
   cost = cost.toLowerCase()
@@ -89,58 +92,46 @@ client.on('message', async message => {
   async function sendCardText(params) {
     rp(params)
         .then(async function(cd) {
-          if (ifexists(cd.card_faces) != '') {
-            var halves = '';
-            var cardhalf;
-            var halfname;
-            var halfcost;
-            var halftype;
-            var halftext;
-            let pt;
-            for (var i = 0; i < 2; i++) {
-              cardhalf = cd.card_faces[i];
-              halfname = '```' + cardhalf.name + ' ';
-              (ifexists(cardhalf.mana_cost) != '') ?
-                  halfcost = cardhalf.mana_cost + '\n' :
-                  halfcost = '\n';
-              halftype = cardhalf.type_line + '\n';
-              halftext = cardhalf.oracle_text;
-              (ifexists(cardhalf.power) != '') ?
-                  pt = '\n' + cardhalf.power + '/' + cardhalf.toughness :
-                  pt = '';
-              halves += halfname + halfcost + halftype.replace('â€”', '—') +
-                  halftext + pt + '```';
-              if (i == 0) {
-                if (ifexists(cardhalf.loyalty) != '') {
-                  halves += 'Loyalty: ' + cardhalf.loyalty;
-                }
-                halves += '\n';
-              }
+          let buildMessage = [];
+          let oracletext = '';
+          let pt = '';
+          let loyalty = '';
+
+          if (cd.card_faces) {
+            let otherHalfCost = '';
+            let halves = [];
+            if (cd.card_faces[1].mana_cost) otherHalfCost = ' // ' + emojify(cd.card_faces[1].mana_cost, message.guild);
+            
+            buildMessage.push(cd.card_faces[0].name + ' // ' + cd.card_faces[1].name);
+            buildMessage.push(emojify(cd.card_faces[0].mana_cost, message.guild) + otherHalfCost);
+            buildMessage.push(titlecase(cd.rarity) + ' (' + cd.set.toUpperCase() + ')');
+            for (let i = 0; i < 2; i++)
+            {
+              let half = ['```\n'];
+              loyalty = '';
+              if (cd.card_faces[i].oracle_text) oracletext = cd.card_faces[i].oracle_text;
+              if (cd.card_faces[i].power) pt = cd.card_faces[i].power + '/' + cd.card_faces[i].toughness;
+              if (cd.card_faces[i].loyalty) loyalty = 'Loyalty: ' + cd.card_faces[i].loyalty;
+
+              half.push(cd.card_faces[i].name + ' ' + cd.card_faces[i].mana_cost);
+              half.push(cd.type_line);
+              half.push(oracletext);
+              half.push(pt);
+              half.push('```' + loyalty);
+              halves.push(half.join('\n'));
             }
-            await message.channel.send(sprintf('%s\n%s\n%s (%s)\n%s', [
-              cd.name,
-              (ifexists(cd.card_faces[1].mana_cost != '')) ?
-                  emojify(cd.card_faces[0].mana_cost, message.guild) + ' // ' +
-                      emojify(cd.card_faces[1].mana_cost, message.guild) :
-                  emojify(cd.card_faces[0].mana_cost, message.guild),
-              titlecase(cd.rarity), cd.set.toUpperCase(), halves
-            ]));
+            buildMessage.push(halves.join(''));
+            await message.channel.send(buildMessage.join('\n'));
           } else {
-            await message.channel.send(sprintf('%s %s\n%s (%s)\n%s\n%s%s%s', [
-              cd.name,
-              (ifexists(cd.mana_cost) != '') ?
-                  emojify(cd.mana_cost, message.guild) :
-                  '',
-              titlecase(cd.rarity), cd.set.toUpperCase(),
-              cd.type_line.replace('â€”', '—'),
-              (cd.oracle_text == '' ? '' : '```\n') +
-                  cd.oracle_text.replace('â€”', '—') +
-                  (cd.oracle_text == '' ? '' : '```'),
-              ifexists(cd.power) + (cd.power == undefined ? '' : '/') +
-                  ifexists(cd.toughness),
-              (cd.loyalty == undefined ? '' : 'Loyalty: ') +
-                  ifexists(cd.loyalty)
-            ]));
+            if (cd.oracle_text) oracletext = '```\n' + cd.oracle_text + '```';
+            if (cd.power) pt = cd.power + '/' + cd.toughness;
+            if (cd.loyalty) loyalty = 'Loyalty: ' + cd.loyalty;
+
+            buildMessage.push(cd.name + ' ' + emojify(cd.mana_cost, message.guild));
+            buildMessage.push(titlecase(cd.rarity) + ' (' + cd.set.toUpperCase() + ')');
+            buildMessage.push(cd.type_line);
+            buildMessage.push(oracletext + pt + loyalty);
+            await message.channel.send(buildMessage.join('\n'));
           }
         })
         .catch(async function(err) {
