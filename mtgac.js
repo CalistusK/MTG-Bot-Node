@@ -15,9 +15,7 @@ function titlecase(string) {
 }
 
 function emojify(cost, server) {
-  if (!cost) {
-    return '';
-  }
+  if (!cost) return '';
   let i;
   let emocost = '';
   cost = cost.toLowerCase()
@@ -156,7 +154,7 @@ client.on('message', async message => {
         json: true
       } 
       rp(uriRulings).then(async function(cr) {
-        if (cr.data === undefined || cr.data.length == 0) {
+        if (!cr.data) {
           await message.channel.send('No rulings found for ' & cd.name)
         } else {
           var readyRulings = parseRulings(cr.data);
@@ -218,8 +216,8 @@ client.on('message', async message => {
       break;
     case 'whitelist':
       // add "owners" to your auth.json as an array with Discord IDs of users
-      // who should have access to this command add "channelwl" to your auth.json
-      // as an empty array
+      // who should have access to this command.
+      // add "channelwl" to your auth.json as an empty array.
       if (auth.owners.includes(message.author.id) &&
           !auth.channelwl.includes(message.channel.id)) {
         auth.channelwl.push(message.channel.id);
