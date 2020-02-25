@@ -31,7 +31,7 @@ function emojify(cost, server) {
 
 function searchExact(results, searched) {
   for (let i = 0; i < results.total_cards; i++) {
-    if (results.data[i].name.toLowerCase() == searched) {
+    if (results.data[i].name.toLowerCase() === searched.toLowerCase()) {
       return results.data[i];
     }
   }
