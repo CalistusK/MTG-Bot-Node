@@ -168,6 +168,9 @@ client.on('message', async message => {
           }
         }
       })
+      .catch(async function(err) {
+        console.log(err);
+      })
     })
     .catch(async function(err) {
       console.log(err);
