@@ -117,7 +117,7 @@ client.on('message', async message => {
             await message.channel.send(buildMessage.join('\n'));
           }
         })
-        .catch(async function(err) {
+        .catch(async (err) => {
           console.log(err)
         });
   }
@@ -142,7 +142,7 @@ client.on('message', async message => {
             await message.channel.send(`${cdset.name} (${cdset.set.toUpperCase()}) ~ $${price}`);
           }
         })
-        .catch(async function(err) {
+        .catch(async (err) => {
           console.log(err);
         });
   }
@@ -168,11 +168,11 @@ client.on('message', async message => {
           }
         }
       })
-      .catch(async function(err) {
+      .catch(async (err) => {
         console.log(err);
       })
     })
-    .catch(async function(err) {
+    .catch(async (err) => {
       console.log(err);
     })
   }
