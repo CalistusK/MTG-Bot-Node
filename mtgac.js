@@ -75,7 +75,7 @@ client.on('message', async message => {
 
   async function sendCardText(params) {
     rp(params)
-        .then(async function(cd) {
+        .then(async (cd) => {
           let buildMessage = [];
           let oracletext = '';
           let pt = '';
@@ -117,14 +117,14 @@ client.on('message', async message => {
             await message.channel.send(buildMessage.join('\n'));
           }
         })
-        .catch(async function(err) {
+        .catch(async (err) => {
           console.log(err)
         });
   }
 
   async function sendCardPrice(params) {
     rp(params)
-        .then(async function(cd) {
+        .then(async (cd) => {
           let cdset = cd;
           let price;
 
@@ -142,18 +142,18 @@ client.on('message', async message => {
             await message.channel.send(`${cdset.name} (${cdset.set.toUpperCase()}) ~ $${price}`);
           }
         })
-        .catch(async function(err) {
+        .catch(async (err) => {
           console.log(err);
         });
   }
 
   async function sendRulings(params) {
-    rp(params).then(async function(cd) {
+    rp(params).then(async (cd) => {
       var uriRulings = {
         uri: cd.rulings_uri,
         json: true
       } 
-      rp(uriRulings).then(async function(cr) {
+      rp(uriRulings).then(async (cr) => {
         if (!cr.data) {
           await message.channel.send('No rulings found for ' & cd.name)
         } else {
@@ -168,11 +168,11 @@ client.on('message', async message => {
           }
         }
       })
-      .catch(async function(err) {
+      .catch(async (err) => {
         console.log(err);
       })
     })
-    .catch(async function(err) {
+    .catch(async (err) => {
       console.log(err);
     })
   }
